@@ -31,6 +31,9 @@ async function run() {
     await client.connect();
 
     const serviceCollection = client.db("carsDoctor").collection("servicess");
+    const checkoutCollection = client
+      .db("carsDoctor")
+      .collection("checkOutInfo");
 
     //find all data
     app.get("/services", async (req, res) => {
@@ -47,16 +50,15 @@ async function run() {
       res.send(coursor);
     });
 
-    //find data for a single id for check out
-    // app.get('/services/:id', async(req, res)=>{
-    //     const id = req.params.id;
-    //     const qurary = {_id: new ObjectId(id)}
-    //     const options = {
-    //         projection: { title: 1, title: 1, price:1 },
-    //       };
-    //     const coursor = await ServerSession.findOne(qurary, options);
-    //     res.send(coursor);
-    // })
+    //checkout info
+
+    //post data in server
+    app.post("/checkout", async (req, res) => {
+      const checkout = req.body;
+      console.log(checkout);
+      const result = await checkoutCollection.insertOne(checkout);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
