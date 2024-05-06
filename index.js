@@ -55,8 +55,27 @@ async function run() {
     //post data in server
     app.post("/checkout", async (req, res) => {
       const checkout = req.body;
-      console.log(checkout);
+      console.log("checkout", checkout);
       const result = await checkoutCollection.insertOne(checkout);
+      res.send(result);
+    });
+
+    //finding user for email
+    app.get("/checkout", async (req, res) => {
+      console.log(req.query.email);
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email };
+      }
+      const result = await checkoutCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //delete data from cart page
+    app.delete("/checkout/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await checkoutCollection.deleteOne(query);
       res.send(result);
     });
 
