@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 const app = express();
 const {
   MongoClient,
@@ -11,8 +13,14 @@ require("dotenv").config();
 const port = process.env.PORT || 5000;
 
 //middlewar
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", 'http://localhost:5174'],
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.h8jmnni.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -35,6 +43,23 @@ async function run() {
       .db("carsDoctor")
       .collection("checkOutInfo");
 
+    //auth info jwt
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      console.log(user);
+      const token = jwt.sign(user , process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: false,
+        })
+        .send({ success: true });
+    });
+
+    //services info
     //find all data
     app.get("/services", async (req, res) => {
       const cursor = serviceCollection.find();
@@ -60,9 +85,10 @@ async function run() {
       res.send(result);
     });
 
-    //finding user for email
+    //finding user for email cart page
     app.get("/checkout", async (req, res) => {
       console.log(req.query.email);
+      console.log("token is : ", req.cookies.token);
       let query = {};
       if (req.query?.email) {
         query = { email: req.query.email };
@@ -74,6 +100,7 @@ async function run() {
     //delete data from cart page
     app.delete("/checkout/:id", async (req, res) => {
       const id = req.params.id;
+
       const query = { _id: new ObjectId(id) };
       const result = await checkoutCollection.deleteOne(query);
       res.send(result);
